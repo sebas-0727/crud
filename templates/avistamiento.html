@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Formulario Avistamiento</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <h1 class="mt-5">Formulario de Avistamiento</h1>
+        
+        <!-- Formulario para registrar un avistamiento -->
+        <h2>Registrar Avistamiento</h2>
+        <form id="formRegistrar">
+            <label for="ubicacion">Ubicación:</label>
+            <select id="ubicacion" name="ubicacion" class="form-control" required>
+                <option value="">Seleccione una zona</option>
+                <option value="zona_1">Zona 1</option>
+                <option value="zona_2">Zona 2</option>
+                <option value="zona_3">Zona 3</option>
+                <option value="zona_4">Zona 4</option>
+            </select>
+            <br><br>
+            
+            <label for="hora">Hora:</label>
+            <input type="time" id="hora" name="hora" class="form-control" required>
+            <br><br>
+            
+            <label for="aspecto">Aspecto:</label>
+            <input type="text" id="aspecto" name="aspecto" class="form-control" required>
+            <br><br>
+            
+            <label for="ataco">Atacó:</label>
+            <select id="ataco" name="ataco" class="form-control" required>
+                <option value="">¿Atacó?</option>
+                <option value="si">Sí</option>
+                <option value="no">No</option>
+            </select>
+            <br><br>
+            
+            <label for="imagen">Imagen:</label>
+            <input type="file" id="imagen" name="imagen" class="form-control" required>
+            <br><br>
+            
+            <button type="button" onclick="registrarAvistamiento()" class="btn btn-primary">Registrar</button>
+        </form>
+        
+        <div id="mensaje" class="mt-3"></div>
+        
+        <hr>
+    
+        <!-- Mostrar avistamientos generales -->
+        <h2>Avistamientos Generales</h2>
+        <div id="avistamientos"></div>
+        
+        <hr>
+    
+        <!-- Formulario para eliminar un avistamiento -->
+        <h2>Eliminar Avistamiento</h2>
+        <form id="formEliminar">
+            <label for="numeroEliminar">Número de Avistamiento:</label>
+            <input type="number" id="numeroEliminar" name="numeroEliminar" class="form-control" required>
+            <button type="button" onclick="eliminarAvistamiento()" class="btn btn-danger">Eliminar</button>
+        </form>
+    
+        <div id="mensajeEliminar" class="mt-3"></div>
+    </div>
+    
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script>
+        function registrarAvistamiento() {
+            const ubicacion = document.getElementById('ubicacion').value;
+            const hora = document.getElementById('hora').value;
+            const aspecto = document.getElementById('aspecto').value;
+            const ataco = document.getElementById('ataco').value;
+            const imagen = document.getElementById('imagen').value;
+
+            if (!ubicacion, !hora, !aspecto, !ataco, !imagen) {
+                alert('Por favor, completa todos los campos.');
+                return;
+            }
+
+            const data = {
+                ubicacion: ubicacion,
+                hora: hora,
+                aspecto: aspecto,
+                ataco: ataco,
+                imagen: imagen
+            };
+
+            fetch('/registrar_avistamiento', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('mensaje').innerHTML = `<div class="alert alert-success">${data.mensaje}</div>`;
+                document.getElementById('formRegistrar').reset();
+                consultarAvistamientos();
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                document.getElementById('mensaje').innerHTML = '<div class="alert alert-danger">Error al registrar avistamiento</div>';
+            });
+        }
+
+        function consultarAvistamientos() {
+            fetch('/avistamientos_general')
+            .then(response => response.json())
+            .then(data => {
+                let html = '<h3>Listado de Avistamientos</h3>';
+                html += '<table class="table table-bordered">';
+                html += '<thead><tr><th>Número</th><th>Ubicación</th><th>Hora</th><th>Aspecto</th><th>Atacó</th><th>Imagen</th></tr></thead>';
+                html += '<tbody>';
+                data.avistamientos.forEach(avistamiento => {
+                    html += `<tr>
+                                <td>${avistamiento.numero}</td>
+                                <td>${avistamiento.ubicacion}</td>
+                                <td>${avistamiento.hora}</td>
+                                <td>${avistamiento.aspecto}</td>
+                                <td>${avistamiento.ataco}</td>
+                                <td>${avistamiento.imagen}</td>
+                            </tr>`;
+                });
+                html += '</tbody></table>';
+                document.getElementById('avistamientos').innerHTML = html;
+            })
+            .catch(error => console.error('Error:', error));
+        }
+
+        function eliminarAvistamiento() {
+            const numero = document.getElementById('numeroEliminar').value;
+
+            fetch(`/eliminar_avistamiento/${numero}`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('mensajeEliminar').innerHTML = `<div class="alert alert-success">${data.mensaje}</div>`;
+                document.getElementById('formEliminar').reset();
+                consultarAvistamientos();
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                document.getElementById('mensajeEliminar').innerHTML = `<div class="alert alert-danger">Error al eliminar avistamiento</div>`;
+            });
+        }
+
+        consultarAvistamientos();
+        setInterval(consultarAvistamientos, 5000);
+    </script>
+</body>
+</html>

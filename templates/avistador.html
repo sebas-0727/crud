@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro de Avistadores</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <h1 class="mt-5">Registro de Avistadores</h1>
+        <form id="avistadorForm">
+            <div class="form-group">
+                <label for="ficha">Ficha</label>
+                <input type="text" class="form-control" id="ficha" required>
+            </div>
+            <div class="form-group">
+                <label for="nombre">Nombre</label>
+                <input type="text" class="form-control" id="nombre" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Registrar</button>
+        </form>
+        <div id="mensaje" class="mt-3"></div>
+
+        <h2 class="mt-5">Listado de Avistadores</h2>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th scope="col">ID</th>
+                    <th scope="col">Ficha</th>
+                    <th scope="col">Nombre</th>
+                    <th scope="col">Acciones</th>
+                </tr>
+            </thead>
+            <tbody id="tablaAvistadores">
+                <!-- Aquí se llenará dinámicamente con datos de avistadores -->
+            </tbody>
+        </table>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            // Cargar avistadores al cargar la página
+            cargarAvistadores();
+
+            $('#avistadorForm').on('submit', function(event) {
+                event.preventDefault();
+                const avistador = {
+                    ficha: $('#ficha').val(),
+                    nombre: $('#nombre').val()
+                };
+                $.ajax({
+                    url: '/registrar_avistador',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify(avistador),
+                    success: function(response) {
+                        $('#mensaje').html('<div class="alert alert-success">' + response.mensaje + '</div>');
+                        $('#avistadorForm')[0].reset();
+                        cargarAvistadores(); // Recargar la tabla después de registrar
+                    },
+                    error: function(xhr, status, error) {
+                        console.error(xhr.responseText);
+                        $('#mensaje').html('<div class="alert alert-danger">Error al registrar avistador</div>');
+                    }
+                });
+            });
+
+            // Función para cargar avistadores
+            function cargarAvistadores() {
+                $.get('/avistador_general', function(response) {
+                    $('#tablaAvistadores').empty(); // Limpiar la tabla antes de agregar datos nuevos
+                    response.avistadores.forEach(function(avistador) {
+                        $('#tablaAvistadores').append(
+                            `<tr>
+                                <td>${avistador.id}</td>
+                                <td>${avistador.ficha}</td>
+                                <td>${avistador.nombre}</td>
+                                <td><button class="btn btn-danger btn-sm" onclick="eliminarAvistador(${avistador.id})">Eliminar</button></td>
+                            </tr>`
+                        );
+                    });
+                }).fail(function(xhr, status, error) {
+                    console.error(xhr.responseText);
+                    $('#mensaje').html('<div class="alert alert-danger">Error al cargar avistadores</div>');
+                });
+            }
+
+            // Función para eliminar avistador
+            window.eliminarAvistador = function(id) {
+                if (confirm('¿Estás seguro de eliminar este avistador?')) {
+                    $.ajax({
+                        url: '/eliminar_avistador/' + id,
+                        type: 'DELETE',
+                        success: function(response) {
+                            cargarAvistadores(); // Recargar la tabla después de eliminar
+                            $('#mensaje').html('<div class="alert alert-success">' + response.mensaje + '</div>');
+                        },
+                        error: function(xhr, status, error) {
+                            console.error(xhr.responseText);
+                            $('#mensaje').html('<div class="alert alert-danger">Error al eliminar avistador</div>');
+                        }
+                    });
+                }
+            };
+        });
+    </script>
+</body>
+</html>

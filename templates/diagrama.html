@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Diagrama de Barras desde Base de Datos</title>
+  <!-- Importar la biblioteca Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- Estilos de Blueprint (sustituir por la URL correcta de Blueprint) -->
+  <link rel="stylesheet" href="url_de_blueprint">
+</head>
+<body>
+  <div style="width: 80%; height: 30%;">
+    <canvas id="myChart"></canvas>
+  </div>
+
+  <script>
+    var ctx = document.getElementById('myChart').getContext('2d');
+    var myChart;
+
+    function obtenerDatos() {
+      fetch('/datos')
+        .then(response => response.json())
+        .then(data => {
+          const categorias = data.map(item => item[0]);
+          const conteos = data.map(item => item[1]);
+
+          if (!myChart) {
+            myChart = new Chart(ctx, {
+              type: 'bar',
+              data: {
+                labels: categorias,
+                datasets: [{
+                  label: 'Avistamiento por Sectores',
+                  data: conteos,
+                  backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                  borderColor: 'rgba(54, 162, 235, 1)',
+                  borderWidth: 1
+                }]
+              },
+              options: {
+                scales: {
+                  y: {
+                    beginAtZero: true,
+                    stacked: true
+                  }
+                }
+              }
+            });
+          } else {
+            myChart.data.labels = categorias;
+            myChart.data.datasets[0].data = conteos;
+            myChart.update();
+          }
+        })
+        .catch(error => console.error('Error al obtener datos:', error));
+    }
+
+    setInterval(obtenerDatos, 5000);
+    obtenerDatos();
+  </script>
+</body>
+</html>
